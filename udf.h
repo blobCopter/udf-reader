@@ -6,9 +6,11 @@
 #include <unistd.h>
 #include <string>
 #include <iostream>
+#include <string.h>
 #include "udf_types.h"
 
 #define SECTOR_SIZE 2048
+#define OFFSET(sector) sector * SECTOR_SIZE
 
 struct PrimaryVolumeDescriptor {
     /* ECMA 167 3/10.1 */
@@ -69,7 +71,14 @@ struct LogicalVolumeIntegrityDesc {
  *
  */
 
-#define VRS_OFFSET 16*SECTOR_SIZE
+#define VRS_CHECK_BEA(bea) ((strncmp((char*)bea.identifier, "BEA01", 5) == 0) ? true : false)
+#define VRS_CHECK_TEA(tea) ((strncmp((char*)tea.identifier, "TEA01", 5) == 0) ? true : false)
+#define VRS_CHECK_NSR(vsd) (((strncmp((char*)vsd.identifier, "NSR02", 5) == 0 || strncmp((char*)vsd.identifier, "NSR03", 5) == 0) ? true : false))
+
+#define VRS_IS_VALID_SEQUENCE(vrs) ((VRS_CHECK_BEA(vrs.bea) && VRS_CHECK_TEA(vrs.tea) && VRS_CHECK_NSR(vrs.vsd)) ? true : false)
+
+#define VRS_SECTOR 16
+#define VRS_OFFSET VRS_SECTOR * SECTOR_SIZE
 
 struct VolumeStructureDescriptor
 {
@@ -93,6 +102,13 @@ typedef VolumeStructureDescriptor TerminatingExtendedAreaDescriptor;
  * data #00
  */
 
+struct VRS
+{
+  struct VolumeStructureDescriptor bea;
+  struct VolumeStructureDescriptor vsd;
+  struct VolumeStructureDescriptor tea;
+};
+
 
 ////////////////////////////////////////////////////////////////////////
 //		AVDP - Anchor Volume Descriptor Pointer
@@ -103,7 +119,13 @@ typedef VolumeStructureDescriptor TerminatingExtendedAreaDescriptor;
  */
 
 
-#define AVDP_OFFSET 256*SECTOR_SIZE
+#define AVDP_SECTOR 256
+#define AVDP_OFFSET AVDP_SECTOR * SECTOR_SIZE
+
+#define AVDP_GET_MVDS_SECTOR(avdp) avdp.MainVolumeDescriptorSequenceExtent.location
+#define AVDP_GET_MVDS_LENGTH(avdp) avdp.MainVolumeDescriptorSequenceExtent.length
+#define AVDP_GET_RVDS_SECTOR(avdp) avdp.ReserveVolumeDescriptorSequenceExtent.location
+#define AVDP_GET_RVDS_LENGTH(avdp) avdp.ReserveVolumeDescriptorSequenceExtent.length
 
 struct AnchorVolumeDescriptorPointer {
   /* ECMA 167 3/10.2 */
@@ -123,6 +145,9 @@ struct AnchorVolumeDescriptorPointer {
  * Contains many descriptors
  */
 
+#define VDS_PD_TAG_IDENTIFIER 5
+#define VDS_LVD_TAG_IDENTIFIER 6
+
 /* MVDS */
 /* ----------------------------------------------------- */
 /* | PVD | IUVD | PD | LVD | USD | TD | ...   | LVID | | */
@@ -132,7 +157,6 @@ struct AnchorVolumeDescriptorPointer {
 
 //
 // PD  --> TAG IDENTIFIER : 5
-// Normally you have 1 PD, but you can have 2 PD (ex: read-only and overwritable)
 //
 struct PartitionDescriptor {
   /* ECMA 167 3/10.5 */
@@ -199,7 +223,7 @@ struct FileSetDescriptor { /* ECMA 167 4/14.1 */
   dstring FileSetIdentifier[32];
   dstring CopyrightFileIdentifier[32];
   dstring AbstractFileIdentifier[32];
-  struct long_ad RootDirectoryICB;
+  struct long_ad RootDirectoryICB; // <<--
   struct EntityID DomainIdentifier;
   struct long_ad NextExtent;
   struct long_ad SystemStreamDirectoryICB;
@@ -207,5 +231,46 @@ struct FileSetDescriptor { /* ECMA 167 4/14.1 */
 };
 
 
+////////////////////////////////////////////////////////////////////////
+//		FE and FID
+////////////////////////////////////////////////////////////////////////
+
+struct FileEntry { /* ECMA 167 4/14.9 */
+  struct tag   DescriptorTag;
+  struct icbtag ICBTag;
+  Uint32 Uid;
+  Uint32 Gid;
+  Uint32 Permissions;
+  Uint16 FileLinkCount;
+  Uint8 RecordFormat;
+  Uint8 RecordDisplayAttributes;
+  Uint32 RecordLength;
+  Uint64 InformationLength;
+  Uint64 LogicalBlocksRecorded;
+  struct timestamp AccessTime;
+  struct timestamp ModificationTime;
+  struct timestamp AttributeTime;
+  Uint32 Checkpoint;
+  struct long_ad ExtendedAttributeICB;
+  struct EntityID ImplementationIdentifier;
+  Uint64  UniqueID;
+  Uint32   LengthofExtendedAttributes;
+  Uint32 LengthofAllocationDescriptors;
+  byte ExtendedAttributes[];
+  byte AllocationDescriptors[];
+};
+
+struct FileIdentifierDescriptor {
+  /* ECMA 167 4/14.4 */
+  struct tag  DescriptorTag;
+  Uint16  FileVersionNumber;
+  Uint8  FileCharacteristics;
+  Uint8  LengthofFileIdentifier;
+  struct long_ad  ICB;
+  Uint16  LengthofImplementationUse;
+  byte  ImplementationUse[];
+  char  FileIdentifier[];
+  byte Padding[];
+};
 
 #endif

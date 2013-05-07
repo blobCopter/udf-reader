@@ -9,6 +9,7 @@ typedef uint8_t Uint8;
 typedef uint16_t Uint16;
 typedef int16_t Int16;
 typedef uint32_t Uint32;
+typedef uint64_t Uint64;
 
 struct charspec {
 /* ECMA 167 1/7.2.1 */
@@ -69,5 +70,15 @@ struct tag {
   Uint32 TagLocation;
 };
 
+struct icbtag { /* ECMA 167 4/14.6 */
+Uint32  PriorRecordedNumberofDirectEntries;
+Uint16 StrategyType;
+byte StrategyParameter[2];
+Uint16 MaximumNumberofEntries;
+byte Reserved;
+Uint8 FileType;
+Lb_addr ParentICBLocation;
+Uint16 Flags;
+};
 
 #endif
