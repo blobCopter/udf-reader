@@ -10,7 +10,9 @@
 #include "udf_types.h"
 
 #define SECTOR_SIZE 2048
-#define OFFSET(sector) sector * SECTOR_SIZE
+#define OFFSET(sector) (Uint64)(sector * SECTOR_SIZE)
+#define OFFSET_LONG_AD(start_sector, l_ad) \
+  (start_sector + l_ad.ExtentLocation.logicalBlockNumber) * SECTOR_SIZE
 
 struct PrimaryVolumeDescriptor {
     /* ECMA 167 3/10.1 */
@@ -45,7 +47,6 @@ struct UnallocatedSpaceDesc {
   Uint32 NumberofAllocationDescriptors;
   extent_ad AllocationDescriptors[];
 };
-
 
 struct LogicalVolumeIntegrityDesc {
   /* ECMA 167 3/10.10 */
@@ -120,7 +121,7 @@ struct VRS
 
 
 #define AVDP_SECTOR 256
-#define AVDP_OFFSET AVDP_SECTOR * SECTOR_SIZE
+#define AVDP_OFFSET OFFSET(AVDP_SECTOR)
 
 #define AVDP_GET_MVDS_SECTOR(avdp) avdp.MainVolumeDescriptorSequenceExtent.location
 #define AVDP_GET_MVDS_LENGTH(avdp) avdp.MainVolumeDescriptorSequenceExtent.length
@@ -208,6 +209,15 @@ struct LogicalVolumeDescriptor {
 //		FSD - FILE SET DESCRIPTOR
 ////////////////////////////////////////////////////////////////////////
 
+#define FSD_TAG_ID 256
+#define FSD_CHECK_TAG(fsd) ((fsd.DescriptorTag.TagIdentifier == FSD_TAG_ID) ? true : false)
+
+#define FE_TAG_ID 261
+#define FE_CHECK_TAG(fe)  (((fe).DescriptorTag.TagIdentifier == FE_TAG_ID) ? true : false)
+
+#define FID_TAG_ID 257
+#define FID_CHECK_TAG(fid)  (((fid).DescriptorTag.TagIdentifier == FID_TAG_ID) ? true : false)
+
 struct FileSetDescriptor { /* ECMA 167 4/14.1 */
   struct tag DescriptorTag;
   struct timestamp RecordingDateandTime;
@@ -223,7 +233,7 @@ struct FileSetDescriptor { /* ECMA 167 4/14.1 */
   dstring FileSetIdentifier[32];
   dstring CopyrightFileIdentifier[32];
   dstring AbstractFileIdentifier[32];
-  struct long_ad RootDirectoryICB; // <<--
+  struct long_ad RootDirectoryICB;
   struct EntityID DomainIdentifier;
   struct long_ad NextExtent;
   struct long_ad SystemStreamDirectoryICB;
@@ -234,6 +244,9 @@ struct FileSetDescriptor { /* ECMA 167 4/14.1 */
 ////////////////////////////////////////////////////////////////////////
 //		FE and FID
 ////////////////////////////////////////////////////////////////////////
+
+#define FE_L_EA(fe) (fe).LengthofExtendedAttributes
+#define FE_L_AD(fe) (fe).LengthofAllocationDescriptors
 
 struct FileEntry { /* ECMA 167 4/14.9 */
   struct tag   DescriptorTag;
@@ -265,10 +278,15 @@ struct FileIdentifierDescriptor {
   struct tag  DescriptorTag;
   Uint16  FileVersionNumber;
   Uint8  FileCharacteristics;
+  /** FileCharacteristics
+   * bit 1 : 0 -> existence of the file shall be made known to the user
+   * bit 2 : 1 -> is a directory
+   * bit 3 : ...
+   */
   Uint8  LengthofFileIdentifier;
   struct long_ad  ICB;
-  Uint16  LengthofImplementationUse;
-  byte  ImplementationUse[];
+  Uint16  LengthofImplementationUse; // L_IU (4)
+  byte  ImplementationUse[]; //
   char  FileIdentifier[];
   byte Padding[];
 };

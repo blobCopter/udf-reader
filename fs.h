@@ -25,7 +25,7 @@ class	FileSystem
   // FILE SET DESCRIPTOR
   FileSetDescriptor fsd;
   // ROOT
-  FileEntry root_dir;
+  FileEntry *root_file_entry;
 
 
   bool checkVolumeRecognitionSequence();

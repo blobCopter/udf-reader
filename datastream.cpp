@@ -34,7 +34,7 @@ void	DataStream::close()
     }
 }
 
-bool	DataStream::read(int seek, unsigned int len, void *data_out)
+bool	DataStream::read(Uint64 seek, unsigned int len, void *data_out)
 {
   if (device == NULL)
     {
@@ -55,7 +55,7 @@ bool	DataStream::read(int seek, unsigned int len, void *data_out)
   if (!is_open)
     {
       std::cout << "Opening device " << device << std::endl;
-      if ((fd = open(device, O_RDONLY)) == -1) {
+      if ((fd = open(device, O_RDONLY | O_LARGEFILE)) == -1) {
 	perror("open");
 	return false;
       }

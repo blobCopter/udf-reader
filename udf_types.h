@@ -12,9 +12,9 @@ typedef uint32_t Uint32;
 typedef uint64_t Uint64;
 
 struct charspec {
-/* ECMA 167 1/7.2.1 */
-Uint8 CharacterSetType;
-byte CharacterSetInfo[63];
+  /* ECMA 167 1/7.2.1 */
+  Uint8 CharacterSetType;
+  byte CharacterSetInfo[63];
 };
 
 struct timestamp {
@@ -33,29 +33,29 @@ struct timestamp {
 
 struct EntityID {
     /* ECMA 167 1/7.4 */
-    Uint8 Flags;
-    char  Identifier[23];
-    char  IdentifierSuffix[8];
+  Uint8 Flags;
+  char  Identifier[23];
+  char  IdentifierSuffix[8];
 };
 
 struct extent_ad
 {
-Uint32 length;
-Uint32 location;
+  Uint32 length;
+  Uint32 location;
 };
 
 struct Lb_addr {
 
-Uint32 logicalBlockNumber; // logical block size in LogicalVolumeDescriptor
-Uint16 partitionReferenceNumber;
+  Uint32 logicalBlockNumber; // logical block size in LogicalVolumeDescriptor
+  Uint16 partitionReferenceNumber;
 
 };
 
 struct long_ad {
 /* ECMA 167 4/14.14.2 */
-Uint32  ExtentLength;
-Lb_addr ExtentLocation;
-byte ImplementationUse[6];
+  Uint32  ExtentLength;
+  Lb_addr ExtentLocation;
+  byte ImplementationUse[6];
 };
 
 struct tag {

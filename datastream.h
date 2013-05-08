@@ -1,6 +1,7 @@
 #ifndef DATA_STREAM_H_
 #define DATA_STREAM_H_
 
+#include "udf_types.h"
 #include "my.h"
 
 #define DEFAULT_DEVICE "/dev/dvd"
@@ -20,7 +21,7 @@ class DataStream
   ~DataStream();
 
   bool	isOpen() const;
-  bool	read(int seek, unsigned int len, void *data);
+  bool	read(Uint64 seek, unsigned int len, void *data);
   void	close();
 };
 
