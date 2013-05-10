@@ -51,8 +51,14 @@ struct Lb_addr {
 
 };
 
+struct short_ad {
+  Uint32 ExtentLength;
+  Uint32 ExtentPosition;
+};
+
+// ALLOCATION DESCRIPTOR
 struct long_ad {
-/* ECMA 167 4/14.14.2 */
+  /* ECMA 167 4/14.14.2 */
   Uint32  ExtentLength;
   Lb_addr ExtentLocation;
   byte ImplementationUse[6];

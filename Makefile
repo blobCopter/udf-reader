@@ -5,7 +5,11 @@ LDFLAGS  +=
 NAME  = udf-reader
 SRC   = main.cpp \
 	fs.cpp \
-	datastream.cpp
+	fsentry.cpp \
+	fsentryptr.cpp \
+	datastream.cpp \
+	console.cpp \
+	unicode.cpp
 
 OBJ   = $(SRC:.cpp=.o)
 

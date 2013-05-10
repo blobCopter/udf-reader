@@ -9,6 +9,7 @@
 #include <string.h>
 #include "udf_types.h"
 
+#define DEFAULT_COPY_SIZE 2048
 #define SECTOR_SIZE 2048
 #define OFFSET(sector) (Uint64)(sector * SECTOR_SIZE)
 #define OFFSET_LONG_AD(start_sector, l_ad) \
@@ -249,28 +250,28 @@ struct FileSetDescriptor { /* ECMA 167 4/14.1 */
 #define FE_L_AD(fe) (fe).LengthofAllocationDescriptors
 
 struct FileEntry { /* ECMA 167 4/14.9 */
-  struct tag   DescriptorTag;
-  struct icbtag ICBTag;
-  Uint32 Uid;
-  Uint32 Gid;
-  Uint32 Permissions;
-  Uint16 FileLinkCount;
-  Uint8 RecordFormat;
-  Uint8 RecordDisplayAttributes;
-  Uint32 RecordLength;
-  Uint64 InformationLength;
-  Uint64 LogicalBlocksRecorded;
-  struct timestamp AccessTime;
-  struct timestamp ModificationTime;
-  struct timestamp AttributeTime;
-  Uint32 Checkpoint;
-  struct long_ad ExtendedAttributeICB;
-  struct EntityID ImplementationIdentifier;
-  Uint64  UniqueID;
-  Uint32   LengthofExtendedAttributes;
-  Uint32 LengthofAllocationDescriptors;
-  byte ExtendedAttributes[];
-  byte AllocationDescriptors[];
+  struct tag		DescriptorTag;
+  struct icbtag		ICBTag;
+  Uint32		Uid;
+  Uint32		Gid;
+  Uint32		Permissions;
+  Uint16		FileLinkCount;
+  Uint8			RecordFormat;
+  Uint8			RecordDisplayAttributes;
+  Uint32		RecordLength;
+  Uint64		InformationLength;
+  Uint64		LogicalBlocksRecorded;
+  struct timestamp	AccessTime;
+  struct timestamp	ModificationTime;
+  struct timestamp	AttributeTime;
+  Uint32		Checkpoint;
+  struct long_ad	ExtendedAttributeICB;
+  struct EntityID	ImplementationIdentifier;
+  Uint64		UniqueID;
+  Uint32		LengthofExtendedAttributes;
+  Uint32		LengthofAllocationDescriptors;
+  byte			ExtendedAttributes[];
+  byte			AllocationDescriptors[];
 };
 
 struct FileIdentifierDescriptor {
