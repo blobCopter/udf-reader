@@ -59,7 +59,7 @@ void	Console::run()
       else if (elems[0] == "exit" || elems[0] == "quit")
 	break;
       else if (elems[0] == "fdisk")
-	std::cout << "fdisk : TODO" << std::endl;
+	fs->fdisk();
       else if (elems[0] == "cp")
 	{
 	  if (elems.size() < 3)

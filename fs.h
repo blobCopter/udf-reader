@@ -15,6 +15,10 @@ class	FileSystem
   DataStream	stream;
   bool		is_loaded;
 
+  // DISK INFO
+  char	*volumeName;
+
+
   // VRS
   VRS				vrs;
   //AVDP
@@ -41,7 +45,7 @@ class	FileSystem
   bool loadAvdp();
   bool loadRootDirectory();
 
-
+  void	setVolumeName(const char *name, Uint32 len);
 
  public:
 
@@ -53,12 +57,14 @@ class	FileSystem
   void	cd(const char *name);
   void	cd();
   void	cp(const char *src, const char *dest);
+  void	fdisk();
 
   std::string	&getCurrentPath();
   FsEntry	*getEntryFromPath(const char *src, std::string &file_name_out);
 
   Uint32 getPartitionSectorNumber() {  return partition_sector; }
   DataStream & getStream() { return stream; }
+  
   
 };
 

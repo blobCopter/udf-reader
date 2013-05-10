@@ -184,7 +184,6 @@ void		FsEntry::print()
       std::cout << (int)ts->Second;
       std::cout << std::endl;
     }
-
   std::list<FsEntryPtr*>::iterator it = sub_entries.begin();
   while (it != sub_entries.end())
     {

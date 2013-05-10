@@ -119,6 +119,9 @@ bool	FileSystem::loadVds()
 	  lvd_found = true;
 	  if (!stream.read(OFFSET(sector), sizeof(lvd), &lvd))
 	    return false;
+
+	  setVolumeName((char*)lvd.LogicalVolumeIdentifier, 128);
+
 	}
       ++sector;
     }
@@ -218,6 +221,9 @@ void	FileSystem::ls()
 
 void	FileSystem::cd(const char *name)
 {
+  if (name[0] == '/' && name[1] == 0)
+    return cd();
+
   if (!strcmp(name, ".."))
     {
       int slash_count = 0;
@@ -263,7 +269,6 @@ std::string	&FileSystem::getCurrentPath()
 {
   return current_path;
 }
-
 
 FsEntry		*FileSystem::getEntryFromPath(const char *src, std::string &file_name_out)
 {
@@ -325,4 +330,30 @@ void		FileSystem::cp(const char *src, const char *dest)
     {
       std::cerr << "Unable to copy file :(" << std::endl;
     }
+}
+
+void		FileSystem::fdisk()
+{
+  if (volumeName)
+    std::cout << "Volume name: " << volumeName << std::endl;
+}
+
+void		FileSystem::setVolumeName(const char *name, Uint32 len)
+{
+  // bloody hack again >,<'
+  int charcount = 0;
+
+  for (unsigned int i = 0; i < len; i++)
+    if (name[i] >= 32 && name[i] <= 126)
+	charcount++;
+  
+  if (volumeName)
+    delete volumeName;
+  volumeName = new char[charcount + 1];
+  
+  int j = 0;
+  for (unsigned int i = 0; i < len; i++)
+    if (name[i] >= 32 && name[i] <= 126)
+      volumeName[j++] = name[i];
+  volumeName[charcount] = '\0';
 }
