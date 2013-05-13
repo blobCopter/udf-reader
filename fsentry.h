@@ -38,6 +38,7 @@ class FsEntry
  public :
 
   FsEntry(FileSystem *filesystem, long_ad fe_addr, bool is_dir, FsEntry *parent); 
+  ~FsEntry();
 
   bool			isDirectory() const;
   bool			initialize();
@@ -45,11 +46,11 @@ class FsEntry
   bool			populate();
   void			setDirectory(bool d);
 
-
   FsEntry		*getSubEntry(const char *name);
   FsEntry		*getParentEntry();
   timestamp		*getModificationTime() { return &ModificationTime; }
   void			print();
+  void			destroy();
 
 
   bool			writeDataToFile(const char *name, const char *dest_dir);

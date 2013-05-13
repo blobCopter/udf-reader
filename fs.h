@@ -17,7 +17,9 @@ class	FileSystem
 
   // DISK INFO
   char	*volumeName;
-
+  timestamp recordingTime;
+  char	lvid_buffer[SECTOR_SIZE];
+  char	udf_version[5];
 
   // VRS
   VRS				vrs;
@@ -28,6 +30,7 @@ class	FileSystem
   int				vds_sector;
   PartitionDescriptor		pd;
   LogicalVolumeDescriptor	lvd;
+  bool				pvd_found;
   Uint32			partition_sector;
   // FSD
   long_ad			fsd_ad;
@@ -51,6 +54,7 @@ class	FileSystem
 
   FileSystem();
   FileSystem(const char *dev);
+  ~FileSystem();
 
   bool	load();
   void	ls();

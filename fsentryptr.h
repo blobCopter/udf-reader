@@ -30,6 +30,7 @@ class FsEntryPtr
   bool		matchName(const char *name);
 
   void		print();
+  void		destroy();
 
 };
 

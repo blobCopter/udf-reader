@@ -1,3 +1,4 @@
+#include <iomanip>
 #include "fs.h"
 
 ////////////////////////////////////////////////////////////////////////
@@ -6,17 +7,33 @@
 
 FileSystem::FileSystem() : stream(), is_loaded(false)
 {
+  pvd_found = false;
   vds_length = 0;
   vds_sector = 0;
   root_file_entry = NULL;
+  memset(udf_version, 0, 5);
 }
 
 FileSystem::FileSystem(const char *device) : stream(device), is_loaded(false)
 {
+  pvd_found = false;
   vds_length = 0;
   vds_sector = 0;
   root_file_entry = NULL;
+  memset(udf_version, 0, 5);
 }
+
+FileSystem::~FileSystem()
+{
+  if (volumeName)
+    delete volumeName;
+  if (root_file_entry)
+    {
+      root_file_entry->destroy();
+      delete root_file_entry;
+    }
+}
+
 
 ////////////////////////////////////////////////////////////////////////
 //		STEP1 - VOLUME DESCRIPTOR SEQUENCE
@@ -29,7 +46,7 @@ bool	FileSystem::checkVolumeRecognitionSequence()
   bool is_valid_format = false;
 
   LOG("=== Checking VRS ==");
-  while (!is_valid_format && (sector <= AVDP_SECTOR - 3))
+  while (!is_valid_format && (sector <= VRS_SECTOR + 16))
     {
       if (stream.read(OFFSET(sector), sizeof(vrs), &vrs) == false)
 	{
@@ -37,8 +54,13 @@ bool	FileSystem::checkVolumeRecognitionSequence()
 	}
 
       if (VRS_IS_VALID_SEQUENCE(vrs))
-	is_valid_format = true;
-      
+	{
+	  if (!strcmp((char*)vrs.vsd.identifier, "NSR02"))
+	    memcpy(udf_version, "1.02", 4);
+	  else
+	    memcpy(udf_version, "2.01", 4);
+	  is_valid_format = true;
+	}
       sector++;
     }
 
@@ -62,7 +84,6 @@ bool	FileSystem::loadAvdp()
     return false;
 
   LOG("=== Reading AVPD for VDS location ===");
-
   if (AVDP_GET_MVDS_LENGTH(avdp) != 0 && AVDP_GET_MVDS_SECTOR(avdp) != 0)
     {
       vds_length = AVDP_GET_MVDS_LENGTH(avdp);
@@ -97,6 +118,7 @@ bool	FileSystem::loadVds()
   tag tmp_tag;
   bool pd_found = false;
   bool lvd_found = false;
+  // pvd is not mandatory
 
   LOG("=== Reading Volume Descriptor Sequence ===");
   while (sector != end_sector)
@@ -120,8 +142,22 @@ bool	FileSystem::loadVds()
 	  if (!stream.read(OFFSET(sector), sizeof(lvd), &lvd))
 	    return false;
 
-	  setVolumeName((char*)lvd.LogicalVolumeIdentifier, 128);
+	  LOG("Loading LVID");
+	  if (!stream.read(lvd.IntegritySequenceExtent.location * SECTOR_SIZE,
+			   SECTOR_SIZE,
+			   lvid_buffer))
+	    return false;
+	}
+      else if (tmp_tag.TagIdentifier == VDS_PVD_TAG_IDENTIFIER)
+	{
+	  char	buffer[SECTOR_SIZE];
 
+	  LOG("PVD FOUND");
+	  if (!stream.read(OFFSET(sector), SECTOR_SIZE, buffer))
+	    return false;
+	  pvd_found = true;
+	  setVolumeName(buffer + 24, 32);
+	  memcpy(&recordingTime, buffer + 376, sizeof(recordingTime));
 	}
       ++sector;
     }
@@ -335,7 +371,42 @@ void		FileSystem::cp(const char *src, const char *dest)
 void		FileSystem::fdisk()
 {
   if (volumeName)
-    std::cout << "Volume name: " << volumeName << std::endl;
+    std::cout << volumeName << std::endl;
+  if (pvd_found)
+    {
+      std::cout << "Record Time:\t\t" <<
+	(int)recordingTime.Year << '-' <<
+	(int)recordingTime.Month << '-' <<
+	(int)recordingTime.Day << "  " <<
+	(int)recordingTime.Hour << ':' <<
+	(int)recordingTime.Minute << ':' <<
+	(int)recordingTime.Second << std::endl;
+    }
+  tag lvidtag;
+  memcpy(&lvidtag, lvid_buffer, sizeof(lvidtag));
+
+  if (lvidtag.TagIdentifier == 9)
+    {
+      float	total_size = 0;
+      Uint32	*sizeArray = (Uint32*)(lvid_buffer + 80);
+      Uint32	partition_number;
+
+      memcpy(&partition_number, lvid_buffer + 72, sizeof(partition_number));
+      std::cout << "Number of partitions:\t" << partition_number << std::endl;
+      // FREE SPACE
+      for (unsigned int i = 0; i < partition_number; i++)
+	total_size += sizeArray[i] * SECTOR_SIZE;
+      total_size = ((total_size / 1024) / 1024) /1024;
+      std::cout << "Disk Free Size:\t\t" << std::setprecision(2) << total_size << "GB" << std::endl;
+      // TOTAL SPACE
+      total_size = 0;
+      sizeArray = (Uint32*)(lvid_buffer + 4 * partition_number + 80);
+      for (unsigned int i = 0; i < partition_number; i++)
+	total_size += sizeArray[i] * SECTOR_SIZE;
+      total_size = ((total_size / 1024) / 1024 ) / 1024;
+      std::cout << "Disk Size:\t\t" << std::setprecision(2) << total_size << "GB" << std::endl;
+    }
+  std::cout << "Udf version:\t\t" << udf_version << std::endl;
 }
 
 void		FileSystem::setVolumeName(const char *name, Uint32 len)

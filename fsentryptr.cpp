@@ -64,11 +64,19 @@ FsEntryPtr::FsEntryPtr(FileSystem *fs, char *buffer, Uint32 len, FsEntry *parent
   long_ad fe_ad;
   memcpy(&fe_ad, buffer + 20, sizeof(fe_ad));
 
+  // Under UNIX and OS/400 these bits shall be processed the same as
+  //   specified in 3.3.1.1.1, except for hidden files which will be processed as
+  // normal non-hidden files
+  //is_hidden = !((fileCharacteristics << 7) >> 7);
+  is_hidden = false;
+
   fileCharacteristics >>= 1;
   fileCharacteristics <<= 7;
   fileCharacteristics >>= 7;
   if (fileCharacteristics)
     is_directory = true;
+  else
+    is_directory = false;
 
   entry = new FsEntry(fs, fe_ad, is_directory, parent);
 }
@@ -78,6 +86,16 @@ FsEntryPtr::~FsEntryPtr()
 {
   if (identifier)
     delete identifier;
+}
+
+void	FsEntryPtr::destroy()
+{
+  if (entry)
+    {
+      entry->destroy();
+      delete entry;
+      entry = NULL;
+    }
 }
 
 bool		FsEntryPtr::isValid()
@@ -92,6 +110,8 @@ Uint32		FsEntryPtr::getTotalLength() const
 
 FsEntry		*FsEntryPtr::getEntry()
 {
+  if (!entry)
+    return NULL;
   entry->initialize();
   return entry;
 }
@@ -105,6 +125,9 @@ bool		FsEntryPtr::matchName(const char *name)
 
 void		FsEntryPtr::print()
 {
+  if (!entry)
+    return;
+
   if (is_hidden)
     std::cout << "<hide>";
   std::cout << '\t';

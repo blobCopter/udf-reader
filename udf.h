@@ -15,32 +15,6 @@
 #define OFFSET_LONG_AD(start_sector, l_ad) \
   (start_sector + l_ad.ExtentLocation.logicalBlockNumber) * SECTOR_SIZE
 
-struct PrimaryVolumeDescriptor {
-    /* ECMA 167 3/10.1 */
-  struct tag DescriptorTag;
-  Uint32 VolumeDescriptorSequenceNumber;
-  Uint32 PrimaryVolumeDescriptorNumber;
-  dstring VolumeIdentifier[32];
-  Uint16 VolumeSequenceNumber;
-  Uint16 MaximumVolumeSequenceNumber;
-  Uint16 InterchangeLevel;
-  Uint16 MaximumInterchangeLevel;
-  Uint32 CharacterSetList;
-  Uint32 MaximumCharacterSetList;
-  dstring VolumeSetIdentifier[128];
-  struct charspec DescriptorCharacterSet;
-  struct charspec ExplanatoryCharacterSet;
-  struct extent_ad VolumeAbstract;   
-  struct extent_ad VolumeCopyrightNotice;
-  struct EntityID ApplicationIdentifier;
-  struct timestamp RecordingDateandTime;
-  struct EntityID ImplementationIdentifier;
-  byte ImplementationUse[64];
-  Uint32 PredecessorVolumeDescriptorSequenceLocation;
-  Uint16 Flags;
-  byte Reserved[22];
-};
-
 struct UnallocatedSpaceDesc {
   /* ECMA 167 3/10.8 */
   struct tag DescriptorTag;
@@ -205,6 +179,40 @@ struct LogicalVolumeDescriptor {
   extent_ad IntegritySequenceExtent;
   byte PartitionMaps[];
 };
+
+
+//
+// PVD --> TAG IDENTIFIER : 1
+//
+
+#define VDS_PVD_TAG_IDENTIFIER 1
+
+struct PrimaryVolumeDescriptor {
+    /* ECMA 167 3/10.1 */
+  struct tag DescriptorTag;
+  Uint32 VolumeDescriptorSequenceNumber;
+  Uint32 PrimaryVolumeDescriptorNumber;
+  dstring VolumeIdentifier[32];
+  Uint16 VolumeSequenceNumber;
+  Uint16 MaximumVolumeSequenceNumber;
+  Uint16 InterchangeLevel;
+  Uint16 MaximumInterchangeLevel;
+  Uint32 CharacterSetList;
+  Uint32 MaximumCharacterSetList;
+  dstring VolumeSetIdentifier[128];
+  struct charspec DescriptorCharacterSet;
+  struct charspec ExplanatoryCharacterSet;
+  struct extent_ad VolumeAbstract;   
+  struct extent_ad VolumeCopyrightNotice;
+  struct EntityID ApplicationIdentifier;
+  struct timestamp RecordingDateandTime;
+  struct EntityID ImplementationIdentifier;
+  byte ImplementationUse[64];
+  Uint32 PredecessorVolumeDescriptorSequenceLocation;
+  Uint16 Flags;
+  byte Reserved[22];
+};
+
 
 ////////////////////////////////////////////////////////////////////////
 //		FSD - FILE SET DESCRIPTOR

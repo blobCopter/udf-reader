@@ -15,13 +15,17 @@ FsEntry::FsEntry(FileSystem *filesystem, long_ad fe_addr, bool is_dir, FsEntry *
   fe_buffer = NULL;
 }
 
+FsEntry::~FsEntry()
+{
+  clearBuffer();
+}
 
 bool		FsEntry::loadBuffer()
 {
   if (fe_buffer != NULL)
     return true;
 
- /**
+  /**
    * LOAD BUFFER FROM DATA STREAM
    */
   Uint64 offset = (fs->getPartitionSectorNumber() + fe_ad.ExtentLocation.logicalBlockNumber)
@@ -95,6 +99,12 @@ bool		FsEntry::populate()
   memcpy(&fid_ad, fe_buffer + l_ea + 176, sizeof(fid_ad));
 
   char *fid_buffer = new char[fid_ad.ExtentLength];
+  if (!fid_buffer)
+    {
+      std::cerr << "Memory allocation failed" << std::endl;
+      return false;
+    }
+
   tag	fid_tag;
   Uint32 completion = 0;
 
@@ -128,6 +138,7 @@ bool		FsEntry::populate()
       completion += fsp->getTotalLength();      
     }
   
+  delete fid_buffer;
   clearBuffer();
   return true;
 }
@@ -283,7 +294,6 @@ std::string	FsEntry::getFileSizeAsString()
       size /= 1024;
       ext = "KB";
     }
-
   if (size > 5000)
     {
       size /= 1024;
@@ -291,7 +301,21 @@ std::string	FsEntry::getFileSizeAsString()
     }
 
   std::ostringstream sstream;
-
   sstream << size << ext;
   return sstream.str();
+}
+
+void	FsEntry::destroy()
+{
+  while (sub_entries.size())
+    {
+      FsEntryPtr *first = sub_entries.front();
+
+      if (first)
+	{
+	  first->destroy();
+	  delete first;
+	}
+      sub_entries.pop_front();
+    }
 }
