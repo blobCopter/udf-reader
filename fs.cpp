@@ -142,6 +142,12 @@ bool	FileSystem::loadVds()
 	  if (!stream.read(OFFSET(sector), sizeof(lvd), &lvd))
 	    return false;
 
+	  udf_version[0] = 48 + lvd.DomainIdentifier.IdentifierSuffix[0];
+	  udf_version[1] = '.';
+	  udf_version[2] = 48 + lvd.DomainIdentifier.IdentifierSuffix[1];
+	  udf_version[3] = 48 + lvd.DomainIdentifier.IdentifierSuffix[2];
+	  udf_version[4] = 0;
+	  
 	  LOG("Loading LVID");
 	  if (!stream.read(lvd.IntegritySequenceExtent.location * SECTOR_SIZE,
 			   SECTOR_SIZE,
